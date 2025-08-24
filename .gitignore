@@ -1,0 +1,14 @@
+# Ignore node_modules in both frontend and backend
+/fintech-chatbot-backend/node_modules/
+/fintech-chatbot-frontend/node_modules/
+
+# Ignore .env files in both frontend and backend
+/fintech-chatbot-backend/.env
+/fintech-chatbot-frontend/.env
+
+# Ignore build folders (optional, depending on your setup)
+/fintech-chatbot-backend/build/
+/fintech-chatbot-frontend/build/
+
+# Ignore other common files
+.DS_Store
