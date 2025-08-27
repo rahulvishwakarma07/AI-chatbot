@@ -24,12 +24,12 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => {
-  console.log('Connected to MongoDB');
-})
-.catch(err => {
-  console.error('MongoDB connection error:', err);
-});
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+  });
 
 // Middleware: Verify JWT
 function authMiddleware(req, res, next) {
@@ -48,41 +48,49 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// Routes
-app.post('/api/chat', authMiddleware, async (req, res) => { 
+//Chat API
+app.post('/api/chat', authMiddleware, async (req, res) => {
   try {
     const { message } = req.body;
-    
+
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
     // Step 1: Classify the query
     const classification = await classifyQuery(message);
-    console.log('Query classification:', classification);
+
+    console.log(classification,'classification');
+
 
     let response;
-    
-    if (classification.type === 'data') {
-      // Step 2: If data query, fetch from database
-      const dbResults = await queryDatabase(message, classification.intent,req.userId);
-      
-      if (dbResults.length > 0) {
-        // Step 3: Generate natural language response with data
+    let dbResults = [];
+
+    if (classification.intent !== "General") {
+      dbResults = await queryDatabase(
+        classification.intent,
+        classification.sub_intent,
+        classification.required_fields || {},
+        req.userId
+      );
+
+      if (dbResults && dbResults.length > 0) {
         response = await generateResponse(message, dbResults, 'data');
       } else {
-        response = "Sorry, no data was found in the database for your query.";
+        response = {
+          content: "Sorry, I couldn’t find any matching records for your query.",
+          type: "text"
+        };
       }
     } else {
-      // Step 4: General query - direct LLM response
       response = await generateResponse(message, null, 'general');
     }
 
     res.json({
-      message: message,
-      response: response,
-      type: classification.type,
-      intent: classification.intent || null
+      message,
+      response, // now includes { content, type }
+      intent: classification.intent || null,
+      sub_intent: classification.sub_intent || null
     });
 
   } catch (error) {
@@ -121,7 +129,7 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1d" });  // expires in 1 day
     res.json({ token });
   } catch (err) {
     console.error("Login error:", err);
@@ -130,10 +138,6 @@ app.post("/api/login", async (req, res) => {
 });
 
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Chatbot server is running' });
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
