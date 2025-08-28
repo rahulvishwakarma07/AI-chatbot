@@ -31,26 +31,38 @@ async function queryDatabase(intent, sub_intent, filters = {}, userId) {
           if (!filters.clientId && !filters.clientName) {
             results = [];
           } else {
-            results = await AUM.aggregate([
-              {
-                $match: {
-                  ...(filters.clientId ? { ID: filters.clientId } : {}),
-                }
-              },
-              {
-                $group: {
-                  _id: filters.clientName ? "$name" : "$ID",
-                  totalAUM: { $sum: { $toDouble: "$cur_val" } }
-                }
-              },
-              {
-                $project: {
-                  _id: 0,
-                  client: "$_id",
-                  totalAUM: 1
-                }
+            let clientId = filters.clientId;
+
+            // 🔹 If clientName is provided → lookup from Client collection
+            if (!clientId && filters.clientName) {
+              const client = await Client.findOne({ name: { $regex: filters.clientName, $options: "i" } });
+              if (client) {
+                clientId = client.ID; // or whatever field matches with AUM.ID
+              } else {
+                results = [];
               }
-            ]);
+            }
+
+            if (clientId) {
+              results = await AUM.aggregate([
+                {
+                  $match: { ID: clientId }
+                },
+                {
+                  $group: {
+                    _id: "$ID",
+                    totalAUM: { $sum: { $toDouble: "$cur_val" } }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    clientId: "$_id",
+                    totalAUM: 1
+                  }
+                }
+              ]);
+            }
           }
         }
         break;

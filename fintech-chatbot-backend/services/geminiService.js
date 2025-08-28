@@ -111,7 +111,7 @@ async function generateResponse(message, data = null, type = 'general') {
 
     }
 
-    prompt += `Important: **Your response should match the language of the user’s query** and should be **human-like** and conversational.`;
+    prompt += `Important: *****Your response should match the language of the user’s query***** and Your tone should be ******human-like****** and conversational.`;
     try {
         const rawResponse = await callGeminiAPI(prompt);
 
@@ -251,29 +251,6 @@ function fetchPrompt(type = 1, message) {
                 User Query: "${message}"
                 `;
             break;
-        case 4:
-            classificationPrompt = `
-                You are an intent classification assistant for a fintech chatbot.  
-                Your top priority is **accuracy**. If the query cannot be mapped clearly, default to:  
-                { "intent": "General", "sub_intent": "general_info", "required_fields": [] }
-
-                Valid Intents:
-                - AUM: client_aum, total_aum
-                - Client: client_info, all_clients
-                - Transaction: client_transactions, all_transactions, filtered_transactions
-                - General: general_info
-
-                Always return strict JSON:
-                {
-                "intent": "<...>",
-                "sub_intent": "<...>",
-                "required_fields": ["..."]
-                }
-
-                User Query: "${message}"
-                `;
-            break;
-
         default:
             classificationPrompt = `
                     You are an intent classification engine for a financial assistant chatbot.

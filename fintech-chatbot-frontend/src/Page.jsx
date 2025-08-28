@@ -120,12 +120,12 @@ export default function ChatbotPage() {
 
       // let spokenText = "";
 
-      // if (typeof res.data.response === "object" && msg.content.type !== "html") {
-      //   spokenText = res.data.response.content;
-      //   speakText(spokenText);
-      // } else {
-      //   spokenText = res.data.response;
-      // } 
+      // // if (typeof res.data.response === "object" && msg.content.type !== "html") {
+      // //   spokenText = res.data.response.content;
+      //   speakText(res.data.response.content);
+      // // } else {
+      // //   spokenText = res.data.response;
+      // // } 
 
 
     } catch (err) {
